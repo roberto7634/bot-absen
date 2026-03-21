@@ -1,0 +1,45 @@
+name: Kirim Rekap Harian
+
+on:
+  schedule:
+    # UTC (WIB = UTC+7)
+    - cron: '0 1 * * *'   # 08:00 WIB - Pengingat
+    - cron: '0 10 * * *'  # 17:00 WIB - Rekap lengkap
+  
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Mode: test atau rekap'
+        required: true
+        default: 'rekap'
+        type: choice
+        options:
+          - test
+          - rekap
+
+jobs:
+  send-report:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Install dependencies
+      run: |
+        pip install pyTelegramBotAPI
+    
+    - name: Jalankan Bot
+      env:
+        TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+      run: |
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          python bot.py ${{ github.event.inputs.mode }}
+        else
+          python bot.py rekap
+        fi
